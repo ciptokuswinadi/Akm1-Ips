@@ -2,61 +2,51 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>AKM IPS Kelas IX</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CBT IPS SMP</title>
 
 <style>
-*{box-sizing:border-box}
 body{
-  font-family:Arial, sans-serif;
-  background:#f2f4f7;
   margin:0;
+  font-family:Arial, Helvetica, sans-serif;
+  background:#f4f6f8;
 }
 .container{
-  max-width:100%;
+  max-width:480px;
+  margin:auto;
+  background:white;
   min-height:100vh;
-  background:#fff;
   padding:16px;
 }
-h1{font-size:22px;text-align:center}
+h2{text-align:center}
 input,button{
   width:100%;
-  padding:14px;
-  margin:10px 0;
+  padding:12px;
+  margin-top:10px;
   font-size:16px;
-  border-radius:8px;
 }
 button{
   background:#2563eb;
-  color:#fff;
+  color:white;
   border:none;
-  font-weight:bold;
+  border-radius:6px;
 }
-.timer{
-  position:sticky;
-  top:0;
-  background:#fee2e2;
-  color:#991b1b;
+button:disabled{background:#aaa}
+.soal{
+  margin-top:20px;
+}
+.opsi label{
+  display:block;
   padding:10px;
-  text-align:center;
-  font-weight:bold;
-}
-.opsi{
-  margin:10px 0;
-  padding:12px;
+  margin-top:8px;
   border:1px solid #ddd;
-  border-radius:8px;
-}
-.opsi input{
-  transform:scale(1.4);
-  margin-right:8px;
+  border-radius:6px;
 }
 .hidden{display:none}
-.score{
-  font-size:24px;
-  font-weight:bold;
-  color:green;
+.timer{
   text-align:center;
+  font-weight:bold;
+  color:#dc2626;
 }
 </style>
 </head>
@@ -64,172 +54,138 @@ button{
 <body>
 <div class="container">
 
-<h1>AKM IPS Kelas IX</h1>
-<p style="text-align:center"><b>Materi:</b> Kebhinekaan & Integrasi Bangsa</p>
-<div class="timer" id="timer">Sisa Waktu: 60:00</div>
-
 <!-- IDENTITAS -->
-<div id="identitas">
-<input id="nama" placeholder="Nama Lengkap">
-<input id="absen" placeholder="No Absen">
-<input id="kelas" placeholder="Kelas">
-<input id="token" placeholder="Token Ujian">
-<button onclick="mulai()">Mulai Tes</button>
+<div id="login">
+  <h2>Ujian IPS</h2>
+  <input id="nisn" placeholder="Masukkan NISN">
+  <button onclick="mulai()">MULAI UJIAN</button>
 </div>
+
+<!-- TIMER -->
+<div id="timer" class="timer hidden"></div>
 
 <!-- SOAL -->
 <div id="soalBox" class="hidden">
-<div id="info"></div>
-<p id="pertanyaan"></p>
-<div id="opsi"></div>
-<button onclick="next()">Soal Berikutnya</button>
+  <div class="soal">
+    <div id="pertanyaan"></div>
+    <div class="opsi" id="opsi"></div>
+  </div>
+  <button onclick="nextSoal()">SOAL BERIKUTNYA</button>
 </div>
 
-<!-- HASIL -->
-<div id="hasil" class="hidden">
-<h2>Hasil Tes</h2>
-<p id="identitasHasil"></p>
-<p class="score" id="nilai"></p>
+<!-- SELESAI -->
+<div id="selesai" class="hidden">
+  <h2>Ujian Selesai</h2>
+  <p>Terima kasih telah mengerjakan.</p>
 </div>
 
 </div>
 
 <script>
-/* ================= KONFIGURASI ================= */
-const JUMLAH_SOAL = 40;
-const TOKEN_UJIAN = "AKM_IPS_9_2026";
-let waktu = 60 * 60;
+/* ================== KONFIGURASI ================== */
+const URL_API = "URL_APPS_SCRIPT_ANDA";
+const waktuUjian = 20 * 60; // 20 menit
 
-/* ================= BANK SOAL CONTOH ================= */
-const bankSoal = [
-{bentuk:"PG",tanya:"Makna kebhinekaan adalah …",
-opsi:["Perbedaan sumber konflik","Perbedaan sebagai kekuatan","Penyeragaman budaya","Dominasi mayoritas"],
-jawaban:1},
-
-{bentuk:"B/S",tanya:"Bahasa Indonesia berfungsi sebagai alat pemersatu bangsa.",
-opsi:["Benar","Salah"],jawaban:0},
-
-{bentuk:"PGK",tanya:"Faktor pendukung integrasi bangsa adalah …",
-opsi:["Bahasa Indonesia","Pancasila","Konflik horizontal","Sejarah perjuangan"],
-jawaban:[0,1,3]}
+/* ================== DATA SOAL ================== */
+const soal = [
+  {
+    tanya:"Perubahan sosial yang terjadi secara lambat disebut?",
+    opsi:["Revolusi","Evolusi","Konflik","Disintegrasi"],
+    benar:1
+  },
+  {
+    tanya:"Contoh integrasi sosial dalam masyarakat majemuk adalah?",
+    opsi:["Tawuran","Gotong royong","Diskriminasi","Konflik"],
+    benar:1
+  }
 ];
 
-/* ================= GENERATE 40 SOAL ================= */
-let soal=[];
-while(soal.length<JUMLAH_SOAL){
-  soal=soal.concat([...bankSoal].sort(()=>Math.random()-0.5));
-}
-soal=soal.slice(0,JUMLAH_SOAL);
+/* ================== VARIABEL ================== */
+let index = 0;
+let skor = 0;
+let timer = waktuUjian;
 
-/* ================= VARIABEL ================= */
-let index=0, skor=0;
-let nama, absen, kelas, tokenInput;
-let timerInterval;
-
-/* ================= TIMER ================= */
-function startTimer(){
-timerInterval=setInterval(()=>{
-  let m=Math.floor(waktu/60);
-  let d=waktu%60;
-  document.getElementById("timer").innerText=`Sisa Waktu: ${m}:${d<10?"0"+d:d}`;
-  if(waktu<=0){clearInterval(timerInterval); selesai();}
-  waktu--;
-},1000);
-}
-
-/* ================= MULAI ================= */
+/* ================== LOGIN ================== */
 function mulai(){
-nama=namaInput=document.getElementById("nama").value;
-absen=document.getElementById("absen").value;
-kelas=document.getElementById("kelas").value;
-tokenInput=document.getElementById("token").value;
+  const nisn = document.getElementById("nisn").value;
+  if(!nisn){ alert("NISN wajib diisi"); return;}
 
-if(!nama||!absen||!kelas||!tokenInput){
- alert("Lengkapi identitas & token");
- return;
-}
-if(tokenInput!==TOKEN_UJIAN){
- alert("Token salah!");
- return;
+  fetch(URL_API,{
+    method:"POST",
+    body:JSON.stringify({nisn:nisn})
+  })
+  .then(r=>r.json())
+  .then(res=>{
+    if(res.status!=="ok"){
+      alert("NISN tidak terdaftar!");
+      return;
+    }
+    document.getElementById("login").classList.add("hidden");
+    document.getElementById("soalBox").classList.remove("hidden");
+    document.getElementById("timer").classList.remove("hidden");
+    startTimer();
+    tampilSoal();
+  });
 }
 
-document.getElementById("identitas").classList.add("hidden");
-document.getElementById("soalBox").classList.remove("hidden");
-startTimer();
-tampilSoal();
-}
-
-/* ================= TAMPIL SOAL ================= */
+/* ================== TAMPIL SOAL ================== */
 function tampilSoal(){
-window.scrollTo({top:0,behavior:"smooth"});
-let s=soal[index];
-document.getElementById("info").innerHTML=`Soal ${index+1} dari ${JUMLAH_SOAL}`;
-document.getElementById("pertanyaan").innerText=s.tanya;
+  const s = soal[index];
+  document.getElementById("pertanyaan").innerHTML =
+    `<b>Soal ${index+1}</b><br>${s.tanya}`;
 
-let html="";
-if(s.bentuk==="PG"||s.bentuk==="B/S"){
- s.opsi.forEach((o,i)=>{
- html+=`<div class="opsi"><input type="radio" name="jawab" value="${i}"> ${o}</div>`;
- });
-}
-if(s.bentuk==="PGK"){
- s.opsi.forEach((o,i)=>{
- html+=`<div class="opsi"><input type="checkbox" name="jawab" value="${i}"> ${o}</div>`;
- });
-}
-document.getElementById("opsi").innerHTML=html;
+  let html="";
+  s.opsi.forEach((o,i)=>{
+    html+=`
+    <label>
+      <input type="radio" name="opsi" value="${i}">
+      ${o}
+    </label>`;
+  });
+  document.getElementById("opsi").innerHTML=html;
 }
 
-/* ================= NEXT ================= */
-function next(){
-let s=soal[index];
-let benar=s.jawaban;
-let jawaban=[];
+/* ================== NEXT ================== */
+function nextSoal(){
+  const jawab = document.querySelector("input[name='opsi']:checked");
+  if(!jawab){alert("Pilih jawaban!");return;}
+  if(parseInt(jawab.value)===soal[index].benar) skor++;
 
-document.querySelectorAll('input[name="jawab"]:checked')
-.forEach(el=>jawaban.push(parseInt(el.value)));
-
-if(jawaban.length===0){
- alert("Pilih jawaban!");
- return;
+  index++;
+  if(index>=soal.length){
+    selesaiUjian();
+  }else{
+    tampilSoal();
+  }
 }
 
-if(Array.isArray(benar)){
- if(benar.every(v=>jawaban.includes(v))) skor++;
-}else{
- if(jawaban[0]===benar) skor++;
+/* ================== TIMER ================== */
+function startTimer(){
+  setInterval(()=>{
+    timer--;
+    const m=Math.floor(timer/60);
+    const d=timer%60;
+    document.getElementById("timer").innerText=
+      `Sisa waktu: ${m}:${d<10?"0"+d:d}`;
+    if(timer<=0) selesaiUjian();
+  },1000);
 }
 
-index++;
-(index<JUMLAH_SOAL)?tampilSoal():selesai();
-}
+/* ================== SELESAI ================== */
+function selesaiUjian(){
+  document.getElementById("soalBox").classList.add("hidden");
+  document.getElementById("timer").classList.add("hidden");
+  document.getElementById("selesai").classList.remove("hidden");
 
-/* ================= SELESAI ================= */
-function selesai(){
-clearInterval(timerInterval);
-document.getElementById("soalBox").classList.add("hidden");
-document.getElementById("hasil").classList.remove("hidden");
+  const nilai = Math.round((skor/soal.length)*100);
 
-let nilaiAkhir=Math.round((skor/JUMLAH_SOAL)*100);
-document.getElementById("identitasHasil").innerHTML=
-`Nama: ${nama}<br>Absen: ${absen}<br>Kelas: ${kelas}`;
-document.getElementById("nilai").innerText=`Nilai Akhir: ${nilaiAkhir}`;
-
-kirimNilai(nilaiAkhir);
-}
-
-/* ================= KIRIM KE DATABASE ================= */
-function kirimNilai(nilai){
-fetch("URL_WEB_APP_APPS_SCRIPT",{
- method:"POST",
- body:JSON.stringify({
-  nama:nama,
-  absen:absen,
-  kelas:kelas,
-  nilai:nilai,
-  token:tokenInput
- })
-});
+  fetch(URL_API,{
+    method:"POST",
+    body:JSON.stringify({
+      nisn: document.getElementById("nisn").value,
+      nilai: nilai
+    })
+  });
 }
 </script>
 
