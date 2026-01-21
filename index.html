@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AKM IPS Kelas IX</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+  font-family:Arial, sans-serif;
+  background:#f2f4f7;
+  margin:0;
+}
+.container{
+  max-width:100%;
+  min-height:100vh;
+  background:#fff;
+  padding:16px;
+}
+h1{font-size:22px;text-align:center}
+input,button{
+  width:100%;
+  padding:14px;
+  margin:10px 0;
+  font-size:16px;
+  border-radius:8px;
+}
+button{
+  background:#2563eb;
+  color:#fff;
+  border:none;
+  font-weight:bold;
+}
+.timer{
+  position:sticky;
+  top:0;
+  background:#fee2e2;
+  color:#991b1b;
+  padding:10px;
+  text-align:center;
+  font-weight:bold;
+}
+.opsi{
+  margin:10px 0;
+  padding:12px;
+  border:1px solid #ddd;
+  border-radius:8px;
+}
+.opsi input{
+  transform:scale(1.4);
+  margin-right:8px;
+}
+.hidden{display:none}
+.score{
+  font-size:24px;
+  font-weight:bold;
+  color:green;
+  text-align:center;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h1>AKM IPS Kelas IX</h1>
+<p style="text-align:center"><b>Materi:</b> Kebhinekaan & Integrasi Bangsa</p>
+<div class="timer" id="timer">Sisa Waktu: 60:00</div>
+
+<!-- IDENTITAS -->
+<div id="identitas">
+<input id="nama" placeholder="Nama Lengkap">
+<input id="absen" placeholder="No Absen">
+<input id="kelas" placeholder="Kelas">
+<input id="token" placeholder="Token Ujian">
+<button onclick="mulai()">Mulai Tes</button>
+</div>
+
+<!-- SOAL -->
+<div id="soalBox" class="hidden">
+<div id="info"></div>
+<p id="pertanyaan"></p>
+<div id="opsi"></div>
+<button onclick="next()">Soal Berikutnya</button>
+</div>
+
+<!-- HASIL -->
+<div id="hasil" class="hidden">
+<h2>Hasil Tes</h2>
+<p id="identitasHasil"></p>
+<p class="score" id="nilai"></p>
+</div>
+
+</div>
+
+<script>
+/* ================= KONFIGURASI ================= */
+const JUMLAH_SOAL = 40;
+const TOKEN_UJIAN = "AKM_IPS_9_2026";
+let waktu = 60 * 60;
+
+/* ================= BANK SOAL CONTOH ================= */
+const bankSoal = [
+{bentuk:"PG",tanya:"Makna kebhinekaan adalah …",
+opsi:["Perbedaan sumber konflik","Perbedaan sebagai kekuatan","Penyeragaman budaya","Dominasi mayoritas"],
+jawaban:1},
+
+{bentuk:"B/S",tanya:"Bahasa Indonesia berfungsi sebagai alat pemersatu bangsa.",
+opsi:["Benar","Salah"],jawaban:0},
+
+{bentuk:"PGK",tanya:"Faktor pendukung integrasi bangsa adalah …",
+opsi:["Bahasa Indonesia","Pancasila","Konflik horizontal","Sejarah perjuangan"],
+jawaban:[0,1,3]}
+];
+
+/* ================= GENERATE 40 SOAL ================= */
+let soal=[];
+while(soal.length<JUMLAH_SOAL){
+  soal=soal.concat([...bankSoal].sort(()=>Math.random()-0.5));
+}
+soal=soal.slice(0,JUMLAH_SOAL);
+
+/* ================= VARIABEL ================= */
+let index=0, skor=0;
+let nama, absen, kelas, tokenInput;
+let timerInterval;
+
+/* ================= TIMER ================= */
+function startTimer(){
+timerInterval=setInterval(()=>{
+  let m=Math.floor(waktu/60);
+  let d=waktu%60;
+  document.getElementById("timer").innerText=`Sisa Waktu: ${m}:${d<10?"0"+d:d}`;
+  if(waktu<=0){clearInterval(timerInterval); selesai();}
+  waktu--;
+},1000);
+}
+
+/* ================= MULAI ================= */
+function mulai(){
+nama=namaInput=document.getElementById("nama").value;
+absen=document.getElementById("absen").value;
+kelas=document.getElementById("kelas").value;
+tokenInput=document.getElementById("token").value;
+
+if(!nama||!absen||!kelas||!tokenInput){
+ alert("Lengkapi identitas & token");
+ return;
+}
+if(tokenInput!==TOKEN_UJIAN){
+ alert("Token salah!");
+ return;
+}
+
+document.getElementById("identitas").classList.add("hidden");
+document.getElementById("soalBox").classList.remove("hidden");
+startTimer();
+tampilSoal();
+}
+
+/* ================= TAMPIL SOAL ================= */
+function tampilSoal(){
+window.scrollTo({top:0,behavior:"smooth"});
+let s=soal[index];
+document.getElementById("info").innerHTML=`Soal ${index+1} dari ${JUMLAH_SOAL}`;
+document.getElementById("pertanyaan").innerText=s.tanya;
+
+let html="";
+if(s.bentuk==="PG"||s.bentuk==="B/S"){
+ s.opsi.forEach((o,i)=>{
+ html+=`<div class="opsi"><input type="radio" name="jawab" value="${i}"> ${o}</div>`;
+ });
+}
+if(s.bentuk==="PGK"){
+ s.opsi.forEach((o,i)=>{
+ html+=`<div class="opsi"><input type="checkbox" name="jawab" value="${i}"> ${o}</div>`;
+ });
+}
+document.getElementById("opsi").innerHTML=html;
+}
+
+/* ================= NEXT ================= */
+function next(){
+let s=soal[index];
+let benar=s.jawaban;
+let jawaban=[];
+
+document.querySelectorAll('input[name="jawab"]:checked')
+.forEach(el=>jawaban.push(parseInt(el.value)));
+
+if(jawaban.length===0){
+ alert("Pilih jawaban!");
+ return;
+}
+
+if(Array.isArray(benar)){
+ if(benar.every(v=>jawaban.includes(v))) skor++;
+}else{
+ if(jawaban[0]===benar) skor++;
+}
+
+index++;
+(index<JUMLAH_SOAL)?tampilSoal():selesai();
+}
+
+/* ================= SELESAI ================= */
+function selesai(){
+clearInterval(timerInterval);
+document.getElementById("soalBox").classList.add("hidden");
+document.getElementById("hasil").classList.remove("hidden");
+
+let nilaiAkhir=Math.round((skor/JUMLAH_SOAL)*100);
+document.getElementById("identitasHasil").innerHTML=
+`Nama: ${nama}<br>Absen: ${absen}<br>Kelas: ${kelas}`;
+document.getElementById("nilai").innerText=`Nilai Akhir: ${nilaiAkhir}`;
+
+kirimNilai(nilaiAkhir);
+}
+
+/* ================= KIRIM KE DATABASE ================= */
+function kirimNilai(nilai){
+fetch("URL_WEB_APP_APPS_SCRIPT",{
+ method:"POST",
+ body:JSON.stringify({
+  nama:nama,
+  absen:absen,
+  kelas:kelas,
+  nilai:nilai,
+  token:tokenInput
+ })
+});
+}
+</script>
+
+</body>
+</html>
