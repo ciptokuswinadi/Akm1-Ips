@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>CBT IPS SMP</title>
 
 <style>
@@ -21,7 +21,7 @@ body{
 h2{text-align:center}
 input,button{
   width:100%;
-  padding:12px;
+  padding:14px;
   margin-top:10px;
   font-size:16px;
 }
@@ -30,33 +30,35 @@ button{
   color:white;
   border:none;
   border-radius:6px;
+  font-weight:bold;
 }
 button:disabled{background:#aaa}
+.timer{
+  text-align:center;
+  font-weight:bold;
+  color:#dc2626;
+  margin-top:10px;
+}
 .soal{
   margin-top:20px;
 }
 .opsi label{
   display:block;
-  padding:10px;
+  padding:12px;
   margin-top:8px;
   border:1px solid #ddd;
   border-radius:6px;
 }
 .hidden{display:none}
-.timer{
-  text-align:center;
-  font-weight:bold;
-  color:#dc2626;
-}
 </style>
 </head>
 
 <body>
 <div class="container">
 
-<!-- IDENTITAS -->
+<!-- LOGIN -->
 <div id="login">
-  <h2>Ujian IPS</h2>
+  <h2>UJIAN IPS</h2>
   <input id="nisn" placeholder="Masukkan NISN">
   <button onclick="mulai()">MULAI UJIAN</button>
 </div>
@@ -77,6 +79,7 @@ button:disabled{background:#aaa}
 <div id="selesai" class="hidden">
   <h2>Ujian Selesai</h2>
   <p>Terima kasih telah mengerjakan.</p>
+  <p id="nilaiAkhir"></p>
 </div>
 
 </div>
@@ -84,7 +87,7 @@ button:disabled{background:#aaa}
 <script>
 /* ================== KONFIGURASI ================== */
 const URL_API = "URL_APPS_SCRIPT_ANDA";
-const waktuUjian = 20 * 60; // 20 menit
+const WAKTU_UJIAN = 20 * 60; // 20 menit
 
 /* ================== DATA SOAL ================== */
 const soal = [
@@ -103,26 +106,35 @@ const soal = [
 /* ================== VARIABEL ================== */
 let index = 0;
 let skor = 0;
-let timer = waktuUjian;
+let waktu = WAKTU_UJIAN;
+let nisnSiswa = "";
+let timerInterval;
 
-/* ================== LOGIN ================== */
+/* ================== LOGIN (TOKEN = NISN) ================== */
 function mulai(){
-  const nisn = document.getElementById("nisn").value;
-  if(!nisn){ alert("NISN wajib diisi"); return;}
+  const nisn = document.getElementById("nisn").value.trim();
+  if(!nisn){
+    alert("NISN wajib diisi!");
+    return;
+  }
 
   fetch(URL_API,{
     method:"POST",
-    body:JSON.stringify({nisn:nisn})
+    body:JSON.stringify({ nisn: nisn })
   })
-  .then(r=>r.json())
+  .then(res=>res.json())
   .then(res=>{
     if(res.status!=="ok"){
       alert("NISN tidak terdaftar!");
       return;
     }
+
+    nisnSiswa = nisn;
+
     document.getElementById("login").classList.add("hidden");
     document.getElementById("soalBox").classList.remove("hidden");
     document.getElementById("timer").classList.remove("hidden");
+
     startTimer();
     tampilSoal();
   });
@@ -132,7 +144,7 @@ function mulai(){
 function tampilSoal(){
   const s = soal[index];
   document.getElementById("pertanyaan").innerHTML =
-    `<b>Soal ${index+1}</b><br>${s.tanya}`;
+    `<b>Soal ${index+1} dari ${soal.length}</b><br>${s.tanya}`;
 
   let html="";
   s.opsi.forEach((o,i)=>{
@@ -148,11 +160,17 @@ function tampilSoal(){
 /* ================== NEXT ================== */
 function nextSoal(){
   const jawab = document.querySelector("input[name='opsi']:checked");
-  if(!jawab){alert("Pilih jawaban!");return;}
-  if(parseInt(jawab.value)===soal[index].benar) skor++;
+  if(!jawab){
+    alert("Pilih jawaban!");
+    return;
+  }
+
+  if(parseInt(jawab.value) === soal[index].benar){
+    skor++;
+  }
 
   index++;
-  if(index>=soal.length){
+  if(index >= soal.length){
     selesaiUjian();
   }else{
     tampilSoal();
@@ -161,28 +179,36 @@ function nextSoal(){
 
 /* ================== TIMER ================== */
 function startTimer(){
-  setInterval(()=>{
-    timer--;
-    const m=Math.floor(timer/60);
-    const d=timer%60;
-    document.getElementById("timer").innerText=
+  timerInterval = setInterval(()=>{
+    waktu--;
+    const m = Math.floor(waktu/60);
+    const d = waktu%60;
+    document.getElementById("timer").innerText =
       `Sisa waktu: ${m}:${d<10?"0"+d:d}`;
-    if(timer<=0) selesaiUjian();
+
+    if(waktu <= 0){
+      clearInterval(timerInterval);
+      selesaiUjian();
+    }
   },1000);
 }
 
 /* ================== SELESAI ================== */
 function selesaiUjian(){
+  clearInterval(timerInterval);
+
   document.getElementById("soalBox").classList.add("hidden");
   document.getElementById("timer").classList.add("hidden");
   document.getElementById("selesai").classList.remove("hidden");
 
   const nilai = Math.round((skor/soal.length)*100);
+  document.getElementById("nilaiAkhir").innerHTML =
+    `<b>Nilai Akhir: ${nilai}</b>`;
 
   fetch(URL_API,{
     method:"POST",
     body:JSON.stringify({
-      nisn: document.getElementById("nisn").value,
+      nisn: nisnSiswa,
       nilai: nilai
     })
   });
