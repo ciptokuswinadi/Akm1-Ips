@@ -2,53 +2,14 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>CBT IPS SMP</title>
-
+<title>CBT IPS - Lengkap</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-body{
-  margin:0;
-  font-family:Arial, Helvetica, sans-serif;
-  background:#f4f6f8;
-}
-.container{
-  max-width:480px;
-  margin:auto;
-  background:white;
-  min-height:100vh;
-  padding:16px;
-}
-h2{text-align:center}
-input,button{
-  width:100%;
-  padding:14px;
-  margin-top:10px;
-  font-size:16px;
-}
-button{
-  background:#2563eb;
-  color:white;
-  border:none;
-  border-radius:6px;
-  font-weight:bold;
-}
-button:disabled{background:#aaa}
-.timer{
-  text-align:center;
-  font-weight:bold;
-  color:#dc2626;
-  margin-top:10px;
-}
-.soal{
-  margin-top:20px;
-}
-.opsi label{
-  display:block;
-  padding:12px;
-  margin-top:8px;
-  border:1px solid #ddd;
-  border-radius:6px;
-}
+body{font-family:Arial;background:#f4f6f8;margin:0}
+.container{max-width:500px;margin:auto;background:#fff;min-height:100vh;padding:16px}
+.opsi label{display:block;padding:10px;border:1px solid #ccc;border-radius:6px;margin-top:8px}
+button{width:100%;padding:12px;font-size:16px;margin-top:15px;background:#2563eb;color:#fff;border:none;border-radius:6px}
+.timer{font-weight:bold;color:#dc2626;text-align:center;margin-bottom:10px}
 .hidden{display:none}
 </style>
 </head>
@@ -56,164 +17,163 @@ button:disabled{background:#aaa}
 <body>
 <div class="container">
 
-<!-- LOGIN -->
 <div id="login">
-  <h2>UJIAN IPS</h2>
-  <input id="nisn" placeholder="Masukkan NISN">
-  <button onclick="mulai()">MULAI UJIAN</button>
+<h2>CBT FORMATIF IPS</h2>
+<input id="nama" placeholder="Nama Lengkap"><br><br>
+<input id="kelas" placeholder="Kelas"><br><br>
+<input id="absen" placeholder="No Absen"><br><br>
+<button onclick="mulai()">MULAI UJIAN</button>
 </div>
 
-<!-- TIMER -->
-<div id="timer" class="timer hidden"></div>
-
-<!-- SOAL -->
 <div id="soalBox" class="hidden">
-  <div class="soal">
-    <div id="pertanyaan"></div>
-    <div class="opsi" id="opsi"></div>
-  </div>
-  <button onclick="nextSoal()">SOAL BERIKUTNYA</button>
+<div class="timer" id="timer"></div>
+<div id="nomor"></div>
+<div id="pertanyaan"></div>
+<div class="opsi" id="opsi"></div>
+<button onclick="nextSoal()">SOAL BERIKUTNYA</button>
 </div>
 
-<!-- SELESAI -->
-<div id="selesai" class="hidden">
-  <h2>Ujian Selesai</h2>
-  <p>Terima kasih telah mengerjakan.</p>
-  <p id="nilaiAkhir"></p>
+<div id="hasilBox" class="hidden">
+<h2>Ujian Selesai</h2>
+<p id="hasil"></p>
 </div>
 
 </div>
 
 <script>
-/* ================== KONFIGURASI ================== */
-const URL_API = "URL_APPS_SCRIPT_ANDA";
-const WAKTU_UJIAN = 20 * 60; // 20 menit
+// ================== KONFIG ==================
+const URL_API = "https://script.google.com/macros/s/AKfycbwVQx160EdAqVkhRSfiaosw1_eaQrYEr6OBnte9Sy2FXveDpAaWlGnnr04nnbMDoRtp_A/exec";
+const DURASI = 40 * 60; // 40 menit
 
-/* ================== DATA SOAL ================== */
-const soal = [
-  {
-    tanya:"Perubahan sosial yang terjadi secara lambat disebut?",
-    opsi:["Revolusi","Evolusi","Konflik","Disintegrasi"],
-    benar:1
-  },
-  {
-    tanya:"Contoh integrasi sosial dalam masyarakat majemuk adalah?",
-    opsi:["Tawuran","Gotong royong","Diskriminasi","Konflik"],
-    benar:1
-  }
+// ================== DATA SOAL (40) ==================
+let soal = [
+{t:"Makna Bhinneka Tunggal Ika adalah …", o:["Satu budaya","Berbeda-beda tetap satu","Hapus perbedaan","Tinggalkan adat"], k:"Berbeda-beda tetap satu"},
+{t:"Integrasi bangsa berarti …", o:["Budaya tunggal","Penyatuan harmonis","Dominasi mayoritas","Penghapusan adat"], k:"Penyatuan harmonis"},
+{t:"Indonesia memiliki lebih dari 700 bahasa daerah.", o:["Benar","Salah"], k:"Benar"},
+{t:"Kebhinekaan hanya tentang bahasa daerah.", o:["Benar","Salah"], k:"Salah"},
+{t:"Indonesia mengakui 6 agama resmi.", o:["Benar","Salah"], k:"Benar"},
+{t:"Masyarakat majemuk berarti homogen.", o:["Benar","Salah"], k:"Salah"},
+{t:"Suku terbesar di Indonesia adalah …", o:["Batak","Bugis","Jawa","Sunda"], k:"Jawa"},
+{t:"Tari Saman berasal dari …", o:["Aceh","Bali","Jawa","Sulawesi"], k:"Aceh"},
+{t:"Bahasa Indonesia berfungsi sebagai …", o:["Bahasa daerah","Bahasa persatuan","Bahasa asing","Bahasa lokal"], k:"Bahasa persatuan"},
+{t:"Pancasila adalah dasar negara Indonesia.", o:["Benar","Salah"], k:"Benar"},
+
+{t:"Gotong royong mencerminkan sila …", o:["Ketuhanan","Persatuan","Keadilan","Kerakyatan"], k:"Persatuan"},
+{t:"Faktor internal integrasi bangsa …", o:["Bahasa Indonesia","ASEAN","Impor","Globalisasi"], k:"Bahasa Indonesia"},
+{t:"Hoaks dapat menyebabkan …", o:["Persatuan","Perpecahan","Kerukunan","Stabilitas"], k:"Perpecahan"},
+{t:"Sumpah Pemuda terjadi tahun …", o:["1908","1928","1945","1965"], k:"1928"},
+{t:"Primordialisme berkaitan dengan …", o:["Identitas bawaan","Ekonomi","Teknologi","Hukum"], k:"Identitas bawaan"},
+
+{t:"Politik identitas dapat berdampak …", o:["Menyatukan","Memecah","Netral","Tidak berpengaruh"], k:"Memecah"},
+{t:"Media sosial mempengaruhi integrasi karena …", o:["Hiburan","Sebar cepat informasi","Offline","Tidak penting"], k:"Sebar cepat informasi"},
+{t:"Gotong royong menunjukkan …", o:["Konflik","Kohesi sosial","Disintegrasi","Individualisme"], k:"Kohesi sosial"},
+{t:"Model integrasi Indonesia adalah …", o:["Asimilasi","Pluralisme","Dominasi","Melting pot"], k:"Pluralisme"},
+{t:"Disparitas pembangunan dapat …", o:["Menguatkan","Menghambat","Netral","Tidak berdampak"], k:"Menghambat"},
+
+{t:"Strategi melawan hoaks adalah …", o:["Sensor","Literasi digital","Pembiaran","Kekerasan"], k:"Literasi digital"},
+{t:"Pancasila menekankan nilai …", o:["Dominasi","Dialog","Konflik","Pemisahan"], k:"Dialog"},
+{t:"Integrasi berhasil ditandai …", o:["Konflik","Identitas nasional kuat","Separatisme","Diskriminasi"], k:"Identitas nasional kuat"},
+{t:"Globalisasi harus dihadapi dengan …", o:["Isolasi","Nilai lokal + global","Menolak","Ekonomi saja"], k:"Nilai lokal + global"},
+{t:"Budaya Betawi contoh …", o:["Asimilasi","Sinkretisme","Konflik","Diskriminasi"], k:"Sinkretisme"},
+
+{t:"Persatuan bangsa harus dijaga dengan …", o:["Kekerasan","Toleransi","Diskriminasi","Paksaan"], k:"Toleransi"},
+{t:"Konflik sosial sering dipicu oleh …", o:["Kesamaan","Perbedaan & kepentingan","Harmoni","Kerja sama"], k:"Perbedaan & kepentingan"},
+{t:"Integrasi nasional memperkuat …", o:["Disintegrasi","Persatuan","Separatisme","Dominasi"], k:"Persatuan"},
+{t:"Pendidikan berperan dalam integrasi melalui …", o:["Indoktrinasi","Penanaman nilai","Paksaan","Sensor"], k:"Penanaman nilai"},
+{t:"Bhinneka Tunggal Ika terdapat pada lambang …", o:["Garuda Pancasila","Bendera","Peta","Istana"], k:"Garuda Pancasila"},
+
+{t:"Kerukunan umat beragama mencerminkan sila …", o:["Ketuhanan","Persatuan","Keadilan","Kerakyatan"], k:"Ketuhanan"},
+{t:"Toleransi berarti …", o:["Membenarkan semua","Menghargai perbedaan","Menyamakan","Menghapus"], k:"Menghargai perbedaan"},
+{t:"Integrasi sosial membutuhkan …", o:["Kepercayaan","Kecurigaan","Dominasi","Paksaan"], k:"Kepercayaan"},
+{t:"Persatuan bangsa Indonesia dilandasi oleh …", o:["Keseragaman","Pancasila","Kekuasaan","Ekonomi"], k:"Pancasila"},
+{t:"Contoh sikap integratif di sekolah …", o:["Tawuran","Diskusi bersama","Bullying","Diskriminasi"], k:"Diskusi bersama"}
 ];
 
-/* ================== VARIABEL ================== */
-let index = 0;
-let skor = 0;
-let waktu = WAKTU_UJIAN;
-let nisnSiswa = "";
-let timerInterval;
+// ================== UTIL ==================
+function shuffle(a){
+ for(let i=a.length-1;i>0;i--){
+  const j=Math.floor(Math.random()*(i+1));
+  [a[i],a[j]]=[a[j],a[i]];
+ }
+}
 
-/* ================== LOGIN (TOKEN = NISN) ================== */
+// ================== VAR ==================
+let index=0, skor=0, waktu=DURASI, timerInt;
+
+// ================== ANTI REFRESH ==================
+window.onbeforeunload = ()=>"Ujian sedang berlangsung!";
+
+// ================== MULAI ==================
 function mulai(){
-  const nisn = document.getElementById("nisn").value.trim();
-  if(!nisn){
-    alert("NISN wajib diisi!");
-    return;
-  }
-
-  fetch(URL_API,{
-    method:"POST",
-    body:JSON.stringify({ nisn: nisn })
-  })
-  .then(res=>res.json())
-  .then(res=>{
-    if(res.status!=="ok"){
-      alert("NISN tidak terdaftar!");
-      return;
-    }
-
-    nisnSiswa = nisn;
-
-    document.getElementById("login").classList.add("hidden");
-    document.getElementById("soalBox").classList.remove("hidden");
-    document.getElementById("timer").classList.remove("hidden");
-
-    startTimer();
-    tampilSoal();
-  });
+ if(!nama.value||!kelas.value||!absen.value){
+  alert("Identitas wajib diisi!");
+  return;
+ }
+ shuffle(soal);
+ soal.forEach(s=>shuffle(s.o));
+ login.classList.add("hidden");
+ soalBox.classList.remove("hidden");
+ startTimer();
+ tampilSoal();
 }
 
-/* ================== TAMPIL SOAL ================== */
-function tampilSoal(){
-  const s = soal[index];
-  document.getElementById("pertanyaan").innerHTML =
-    `<b>Soal ${index+1} dari ${soal.length}</b><br>${s.tanya}`;
-
-  let html="";
-  s.opsi.forEach((o,i)=>{
-    html+=`
-    <label>
-      <input type="radio" name="opsi" value="${i}">
-      ${o}
-    </label>`;
-  });
-  document.getElementById("opsi").innerHTML=html;
-}
-
-/* ================== NEXT ================== */
-function nextSoal(){
-  const jawab = document.querySelector("input[name='opsi']:checked");
-  if(!jawab){
-    alert("Pilih jawaban!");
-    return;
-  }
-
-  if(parseInt(jawab.value) === soal[index].benar){
-    skor++;
-  }
-
-  index++;
-  if(index >= soal.length){
-    selesaiUjian();
-  }else{
-    tampilSoal();
-  }
-}
-
-/* ================== TIMER ================== */
+// ================== TIMER ==================
 function startTimer(){
-  timerInterval = setInterval(()=>{
-    waktu--;
-    const m = Math.floor(waktu/60);
-    const d = waktu%60;
-    document.getElementById("timer").innerText =
-      `Sisa waktu: ${m}:${d<10?"0"+d:d}`;
-
-    if(waktu <= 0){
-      clearInterval(timerInterval);
-      selesaiUjian();
-    }
-  },1000);
+ timerInt=setInterval(()=>{
+  waktu--;
+  let m=Math.floor(waktu/60);
+  let d=waktu%60;
+  timer.innerText=`Sisa waktu: ${m}:${d<10?"0"+d:d}`;
+  if(waktu<=0){clearInterval(timerInt);selesai();}
+ },1000);
 }
 
-/* ================== SELESAI ================== */
-function selesaiUjian(){
-  clearInterval(timerInterval);
+// ================== TAMPIL ==================
+function tampilSoal(){
+ const s=soal[index];
+ nomor.innerHTML=`<b>Soal ${index+1} dari ${soal.length}</b>`;
+ pertanyaan.innerHTML=s.t;
+ opsi.innerHTML="";
+ s.o.forEach(o=>{
+  opsi.innerHTML+=`
+  <label><input type="radio" name="opsi" value="${o}"> ${o}</label>`;
+ });
+}
 
-  document.getElementById("soalBox").classList.add("hidden");
-  document.getElementById("timer").classList.add("hidden");
-  document.getElementById("selesai").classList.remove("hidden");
+// ================== NEXT ==================
+function nextSoal(){
+ const pilih=document.querySelector("input[name='opsi']:checked");
+ if(!pilih){alert("Pilih jawaban!");return;}
+ if(pilih.value===soal[index].k) skor++;
+ index>=soal.length-1?selesai():(index++,tampilSoal());
+}
 
-  const nilai = Math.round((skor/soal.length)*100);
-  document.getElementById("nilaiAkhir").innerHTML =
-    `<b>Nilai Akhir: ${nilai}</b>`;
+// ================== SELESAI ==================
+function selesai(){
+ clearInterval(timerInt);
+ window.onbeforeunload=null;
+ soalBox.classList.add("hidden");
+ hasilBox.classList.remove("hidden");
 
-  fetch(URL_API,{
-    method:"POST",
-    body:JSON.stringify({
-      nisn: nisnSiswa,
-      nilai: nilai
-    })
-  });
+ let nilai=Math.round((skor/soal.length)*100);
+ hasil.innerHTML=`Nama: ${nama.value}<br>Kelas: ${kelas.value}<br>
+ Absen: ${absen.value}<br><br><b>Nilai: ${nilai}</b>`;
+
+ fetch(URL_API,{
+  method:"POST",
+  body:JSON.stringify({
+   nama:nama.value,
+   kelas:kelas.value,
+   absen:absen.value,
+   skor:skor,
+   nilai:nilai
+  })
+ });
 }
 </script>
 
 </body>
 </html>
+<button onclick="kirimUjian()">KIRIM JAWABAN</button>
+<button onclick="keluarUjian()" style="background:#dc2626">KELUAR</button>
+
